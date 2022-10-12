@@ -32,7 +32,7 @@
     be ->'s, and the word "graph" would be replaced by "digraph". DOT has *many*
     more features, but that's all this Graph class supports.
 '''
-
+from queue import Queue
 import re
 
 class Graph:
@@ -43,6 +43,7 @@ class Graph:
         self.directed = directed
         self.name = name
         self.adjacencies = {}
+        self.notVisited = []
         if dotfile is not None:
             self._load_from_dotfile(dotfile)
 
@@ -103,6 +104,7 @@ class Graph:
     def add_node(self, node):
         if node not in self.adjacencies:
             self.adjacencies[node] = set()
+            self.notVisited.append(node)
 
     def add_nodes(self, nodes):
         for node in nodes:
@@ -127,7 +129,24 @@ class Graph:
 
             Returns an empty Graph if this Graph is directed or if
             start_node is not in this Graph. '''
-        return Graph(name='EmptyBFSTree')
+        if self.directed == True or start_node not in self.adjacencies:
+            return Graph(name='EmptyBFSTree')
+        BFSTree = Graph(name='BFSTree')
+        queue = Queue()
+        queue.put(start_node)
+        BFSTree.add_node(start_node)
+        while len(self.notVisited) > 0:
+            node = queue.get()
+            for neighbor in self.adjacencies[node]: 
+                if neighbor in self.notVisited: 
+                    BFSTree.add_node(neighbor)
+                    BFSTree.add_edge(node,neighbor)
+                    queue.put(neighbor)
+                    self.notVisited.remove(neighbor)
+            if node in self.notVisited: 
+                self.notVisited.remove(node)
+            
+        return BFSTree
 
     def dfs_tree(self, start_node):
         ''' Returns a Graph with the same node set as this Graph instance,
