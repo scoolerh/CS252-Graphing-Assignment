@@ -1,0 +1,8 @@
+digraph DirectedSample {
+    A -> B;
+    B -> C;
+    B -> D;
+    E -> D;
+    E -> A;
+    E -> F;
+}
