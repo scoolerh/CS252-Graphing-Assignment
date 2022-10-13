@@ -134,13 +134,20 @@ class Graph:
 
             Returns an empty Graph if this Graph is directed or if
             start_node is not in this Graph. '''
+
+        #checks if graph is directed or if start_node is not in graph 
+        #O(V) worst case 
         if self.directed == True or start_node not in self.adjacencies:
             return Graph(name='EmptyBFSTree')
+
         BFSTree = Graph(name='BFSTree')
         queue = Queue()
         queue.put(start_node)
         BFSTree.add_node(start_node)
         unvisited = copy.copy(self.notVisited)
+
+        #while there are unvisited nodes, adds them and their unvisited
+        #neighbors to the queue/tree, then removes them from unvisited
         while len(unvisited) > 0:
             node = queue.get()
             if node in unvisited: 
@@ -161,6 +168,7 @@ class Graph:
             Returns an empty Graph if this Graph is directed or if
             start_node is not in this Graph. '''
 
+        #checks if graph is directed or if start_node is not in graph
         if self.directed == True or start_node not in self.adjacencies:
             return Graph(name='EmptyDFSTree')
 
@@ -170,20 +178,26 @@ class Graph:
             parent[node] = ''           
         DFSTree = Graph(name='DFSTree')
 
+        #call helper method 
         DFSTree = self.dfs_tree_helper(DFSTree,start_node,unvisited,parent)
         return DFSTree
     
     def dfs_tree_helper(self,dfstree, start_node,unvisited,parent):
         ''' Helps the DFS_tree method to recursively create a DFS tree.'''
+        
+        #adds a start_node to tree if not already there
         if start_node in unvisited: 
             unvisited.remove(start_node)
             dfstree.add_node(start_node)
             if parent[start_node] != '':
                 dfstree.add_edge(start_node,parent[start_node])
+        
+        #recursively calls itself on any unvisited neighbors
         for neighbor in self.adjacencies[start_node]:
             if neighbor in unvisited: 
                 parent[neighbor] = start_node
                 self.dfs_tree_helper(dfstree,neighbor,unvisited,parent)
+
         return dfstree
 
     def topological_sort(self):
@@ -191,6 +205,10 @@ class Graph:
             
             Returns an empty list if this Graph is not a DAG.
         '''
+        graph = copy.copy(self)
+
+        #checks if graph is a DAG using principal that every DAG will
+        #have at least one leaf, returns empty list if no leaf found
         acyclic = False
         for node in self.adjacencies:
             if self.adjacencies[node] == set():
@@ -198,32 +216,40 @@ class Graph:
         if acyclic == False: 
             return []
 
-        graph = copy.copy(self)
         noIncomingEdges = []
         for node in graph.adjacencies:
             noIncomingEdges.append(node)
         topSort = []
 
-        while graph.adjacencies:
-            self.top_sort_helper(graph,noIncomingEdges,topSort)
+        #call the helper function
+        topSort = self.top_sort_helper(graph,noIncomingEdges,topSort)
 
         return topSort
 
     def top_sort_helper(self,graph,noIncomingEdges,topSort):
         ''' Helps the topological_sort method to recursively sort the graph.'''
+        
         for node in graph.adjacencies:
             if node not in noIncomingEdges:
                 noIncomingEdges.append(node)
 
+        #removes nodes with incoming edges from noIncomingEdges 
         for node in graph.adjacencies:
             for neighbor in graph.adjacencies[node]:
                 if neighbor in noIncomingEdges: 
                     noIncomingEdges.remove(neighbor)
         
+        #adds the first node in noIncomingEdges to topSort 
         node = noIncomingEdges[0] 
         topSort.append(node)
+
+        #removes that node from the graph, thus removing its edges as well
         graph.remove_node(node)
         noIncomingEdges.remove(node)
+
+        #while there are nodes left in the graph, recursively calls itself
+        while graph.adjacencies: 
+            topSort = self.top_sort_helper(graph,noIncomingEdges,topSort)
 
         return topSort
 
