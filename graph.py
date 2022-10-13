@@ -34,6 +34,7 @@
 '''
 from queue import Queue
 import re
+import copy
 
 class Graph:
     def __init__(self, dotfile=None, directed=False, name='G'):
@@ -122,6 +123,10 @@ class Graph:
         for u, v in edges:
             self.add_edge(u, v)
 
+    def remove_node(self, node):
+        if node in self.adjacencies: 
+            self.adjacencies.pop(node)
+
     def bfs_tree(self, start_node):
         ''' Returns a Graph with the same node set as this Graph instance,
             and with a subset of this Graph's edge set corresponding to
@@ -135,17 +140,17 @@ class Graph:
         queue = Queue()
         queue.put(start_node)
         BFSTree.add_node(start_node)
-        while len(self.notVisited) > 0:
+        unvisited = copy.copy(self.notVisited)
+        while len(unvisited) > 0:
             node = queue.get()
+            if node in unvisited: 
+                unvisited.remove(node)
             for neighbor in self.adjacencies[node]: 
-                if neighbor in self.notVisited: 
+                if neighbor in unvisited: 
                     BFSTree.add_node(neighbor)
                     BFSTree.add_edge(node,neighbor)
                     queue.put(neighbor)
-                    self.notVisited.remove(neighbor)
-            if node in self.notVisited: 
-                self.notVisited.remove(node)
-            
+                    unvisited.remove(neighbor)
         return BFSTree
 
     def dfs_tree(self, start_node):
@@ -155,14 +160,72 @@ class Graph:
 
             Returns an empty Graph if this Graph is directed or if
             start_node is not in this Graph. '''
-        return Graph(name='EmptyDFSTree')
+
+        if self.directed == True or start_node not in self.adjacencies:
+            return Graph(name='EmptyDFSTree')
+
+        unvisited = list(self.notVisited)
+        parent = {}
+        for node in self.adjacencies:
+            parent[node] = ''           
+        DFSTree = Graph(name='DFSTree')
+
+        DFSTree = self.dfs_tree_helper(DFSTree,start_node,unvisited,parent)
+        return DFSTree
+    
+    def dfs_tree_helper(self,dfstree, start_node,unvisited,parent):
+        ''' Helps the DFS_tree method to recursively create a DFS tree.'''
+        if start_node in unvisited: 
+            unvisited.remove(start_node)
+            dfstree.add_node(start_node)
+            if parent[start_node] != '':
+                dfstree.add_edge(start_node,parent[start_node])
+        for neighbor in self.adjacencies[start_node]:
+            if neighbor in unvisited: 
+                parent[neighbor] = start_node
+                self.dfs_tree_helper(dfstree,neighbor,unvisited,parent)
+        return dfstree
 
     def topological_sort(self):
         ''' Returns a topologically sorted list of the nodes of this Graph.
             
             Returns an empty list if this Graph is not a DAG.
         '''
-        return []
+        acyclic = False
+        for node in self.adjacencies:
+            if self.adjacencies[node] == set():
+                acyclic = True   
+        if acyclic == False: 
+            return []
+
+        graph = copy.copy(self)
+        noIncomingEdges = []
+        for node in graph.adjacencies:
+            noIncomingEdges.append(node)
+        topSort = []
+
+        while graph.adjacencies:
+            self.top_sort_helper(graph,noIncomingEdges,topSort)
+
+        return topSort
+
+    def top_sort_helper(self,graph,noIncomingEdges,topSort):
+        ''' Helps the topological_sort method to recursively sort the graph.'''
+        for node in graph.adjacencies:
+            if node not in noIncomingEdges:
+                noIncomingEdges.append(node)
+
+        for node in graph.adjacencies:
+            for neighbor in graph.adjacencies[node]:
+                if neighbor in noIncomingEdges: 
+                    noIncomingEdges.remove(neighbor)
+        
+        node = noIncomingEdges[0] 
+        topSort.append(node)
+        graph.remove_node(node)
+        noIncomingEdges.remove(node)
+
+        return topSort
 
 # Very simple-minded testing of Graph operations
 def test_report(message, g):
