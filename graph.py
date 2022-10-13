@@ -7,9 +7,6 @@
     (self.adjacencies). The value associated with a node in this dictionary
     is a set of the names of the node's neighbors.
 
-    Not much error handling, so if it crashes on you, feel free to add some
-    exception handling of your own.
-
     Currently, this class supports:
 
         directed & undirected graphs
